@@ -5,6 +5,8 @@
 # IntelliJ project files
 .idea
 *.iml
+
+# python
 test*
 *.pyc
 *.DS_Store
