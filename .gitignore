@@ -6,3 +6,6 @@
 .idea
 *.iml
 test*
+*.pyc
+*.DS_Store
+*.ipynb_checkpoints
