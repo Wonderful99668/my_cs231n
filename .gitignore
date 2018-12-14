@@ -11,3 +11,7 @@ test*
 *.pyc
 *.DS_Store
 *.ipynb_checkpoints
+
+# datasets
+*.tar.gz
+cifar-10-batches-py/*

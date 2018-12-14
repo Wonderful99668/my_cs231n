@@ -1,4 +1,3 @@
-pass
 from assignment2.cs231n.layers import *
 from assignment2.cs231n.fast_layers import *
 
