@@ -54,7 +54,7 @@ class CaptioningSolver(object):
       training-time loss and gradients, with the following inputs and outputs:
 
       Inputs:
-      - features: Array giving a minibatch of features for images, of shape (N, D
+      - features: Array giving a minibatch of features for images, of shape (N, D)
       - captions: Array of captions for those images, of shape (N, T) where
         each element is in the range (0, V].
 
@@ -111,7 +111,7 @@ class CaptioningSolver(object):
         # name with the actual function
         if not hasattr(optim, self.update_rule):
             raise ValueError('Invalid update_rule "%s"' % self.update_rule)
-        self.update_rule = getattr(optim, self.update_rule)
+        self.update_rule = getattr(optim, self.update_rule) # equivalent to: optim.(self.update_rule)
 
         self._reset()
 
@@ -133,7 +133,7 @@ class CaptioningSolver(object):
         self.optim_configs = {}
         for p in self.model.params:
             d = {k: v for k, v in self.optim_config.items()}
-            self.optim_configs[p] = d
+            self.optim_configs[p] = d # set optim_config for each parameter in the model
 
 
     def _step(self):
@@ -152,6 +152,7 @@ class CaptioningSolver(object):
         self.loss_history.append(loss)
 
         # Perform a parameter update
+        # p: parameter's name w: parameter's value
         for p, w in self.model.params.items():
             dw = grads[p]
             config = self.optim_configs[p]
@@ -176,7 +177,7 @@ class CaptioningSolver(object):
         - acc: Scalar giving the fraction of instances that were correctly
           classified by the model.
         """
-        return 0.0
+        # return 0.0
 
         # Maybe subsample the data
         N = X.shape[0]
@@ -187,17 +188,20 @@ class CaptioningSolver(object):
             y = y[mask]
 
         # Compute predictions in batches
-        num_batches = N / batch_size
+        num_batches = N // batch_size
         if N % batch_size != 0:
             num_batches += 1
+
         y_pred = []
         for i in range(num_batches):
             start = i * batch_size
             end = (i + 1) * batch_size
             scores = self.model.loss(X[start:end])
             y_pred.append(np.argmax(scores, axis=1))
-        y_pred = np.hstack(y_pred)
-        acc = np.mean(y_pred == y)
+        # y_pred = [np.array(1), np.array(2) ...]
+        # np.hstack(y_pred) = np.array(1, 2, ....)
+        y_pred = np.hstack(y_pred) # turn y_pred into numpy array
+        acc = np.mean(y_pred == y) # acc = right_num / N
 
         return acc
 

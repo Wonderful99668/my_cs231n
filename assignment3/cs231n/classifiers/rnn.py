@@ -140,7 +140,34 @@ class CaptioningRNN(object):
         # Note also that you are allowed to make use of functions from layers.py   #
         # in your implementation, if needed.                                       #
         ############################################################################
-        pass
+        # project the image features into initial hidden state
+        init_h, cache_init = affine_forward(features, W_proj, b_proj) # shape=(N, H)
+        # transform the words in caption_in from indices into vectors
+        embedded_caption_in, cache_embedded = word_embedding_forward(captions_in, W_embed)
+        # forward pass
+        if self.cell_type == 'rnn':
+            rnn_out, cache_rnn = rnn_forward(embedded_caption_in, init_h, Wx, Wh, b)
+        elif self.cell_type == 'lstm':
+            pass
+        # compute the loss at each timestep
+        score, cache_score = temporal_affine_forward(rnn_out, W_vocab, b_vocab)
+        # compute the loss
+        loss, dloss = temporal_softmax_loss(score, captions_out, mask)
+
+        # backprop
+        dscore, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dloss, cache_score)
+
+        if self.cell_type == 'rnn':
+            dx, dh0, dWx, dWh, db = rnn_backward(dscore, cache_rnn)
+            grads['b'], grads['Wh'], grads['Wx'] = db, dWh, dWx
+        elif self.cell_type == 'lstm':
+            pass
+
+        # backprop dx to get the gradient for word embedding weights
+        grads['W_embed'] = word_embedding_backward(dx, cache_embedded)
+        # backprop dho to get the gradients for feature projection weights
+        dinit_h, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, cache_init)
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -205,7 +232,25 @@ class CaptioningRNN(object):
         # NOTE: we are still working over minibatches in this function. Also if   #
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
-        pass
+        # calculate the first hidden state
+        h0, _ = affine_forward(features, W_proj, b_proj)
+        prev_word_idx = [self._start] * N
+        prev_h = h0
+
+        for t in range(max_length):
+            prev_word_embed = W_embed[prev_word_idx]
+            if self.cell_type == 'rnn':
+                next_h, _ = rnn_step_forward(prev_word_embed, prev_h, Wx, Wh, b)
+            elif self.cell_type == 'lstm':
+                pass
+            else:
+                raise ValueError('Invalidate cell_type % s' % self.cell_type)
+
+            next_score, _ = affine_forward(next_h, W_vocab, b_vocab)
+            captions[:, t] = np.argmax(next_score, axis=1)
+            prev_word_idx = captions[:, t]
+            prev_h = next_h
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
